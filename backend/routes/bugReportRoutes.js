@@ -9,11 +9,12 @@ router.get('/api/bugs/:report_id', bugController.getBugReportById);
 
 router.put('/api/bugs/:report_id/resolve', bugController.updateStutus);
 
-// POST phản hồi lỗi
-// router.post('/api/bugs/details', bugController.responseToBug);
-
 router.get('/api/responses/:report_id', bugController.getResponseByBugId);
 
 router.post('/api/response', bugController.postResponseToBug);
+
+router.post('/api/bugs', bugController.createBugReport);
+
+router.get('/api/users/:user_id/bugs', bugController.getUserBugReports);
 
 module.exports = router;

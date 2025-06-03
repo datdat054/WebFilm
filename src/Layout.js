@@ -25,6 +25,8 @@ import ListSearchMovie from "./pages/Admin/ListSearchMovie";
 import BugList from "./pages/Technical/BugList";
 import BugResponse from "./pages/Technical/BugResponse";
 import { FilterProvider } from "./components/FilterContext";
+import ReportBug from "./pages/User/ReportBug";
+import XemResponse from "./pages/User/XemResponse";
 
 export default function Layout() {
   const location = useLocation();
@@ -62,6 +64,8 @@ export default function Layout() {
           <Route path="/movies/favorites" element={<Favorites />} />
           <Route path="/movieDetail/:id" element={<MovieDetail />} />
           <Route path="/movies/watch-history" element={<WatchHistoryList />} />
+          <Route path="/report-bug" element={<ReportBug />} />
+          <Route path="/xem-response" element={<XemResponse/>} />
           <Route
             path="/profile"
             element={

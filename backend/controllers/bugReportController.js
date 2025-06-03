@@ -32,17 +32,6 @@ const updateStutus = (req, res) => {
   });
 }
 
-// Gửi phản hồi đến lỗi
-// const responseToBug = (req, res) => {
-//   const { report_id, response_text, technician_id } = req.body;
-//   const sql =
-//     "INSERT INTO bug_responses (bug_id, response_text, technician_id) VALUES (?, ?, ?)";
-//   db.query(sql, [report_id, response_text, technician_id], (err, result) => {
-//     if (err) return res.status(500).json({ message: "Lỗi khi gửi phản hồi" });
-//     res.json({ message: "Phản hồi đã được gửi thành công" });
-//   });
-// };
-
 const getResponseByBugId = (req, res) => {
   const reportId = req.params.report_id;
   const sql = `
@@ -89,13 +78,87 @@ const postResponseToBug = (req, res) => {
       res.json({ message: "Phản hồi đã được gửi và trạng thái lỗi đã được cập nhật." });
     });
   });
-};  
+};
+
+//API POST lỗi, thêm vào bảng bug_reports từ phía người dùng gửi
+const createBugReport = async (req, res) => {
+    try {
+        const { title, description, userId } = req.body;
+
+        const query = 'INSERT INTO bug_reports (title, description, user_id, status, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())';
+        const values = [title, description, userId, 'pending'];
+
+        db.query(query, values, (err, result) => {
+            if (err) {
+                console.error('Lỗi khi tạo báo lỗi:', err);
+                return res.status(500).json({ message: 'Đã có lỗi xảy ra khi gửi báo lỗi.' });
+            }
+            res.status(201).json({ message: 'Báo lỗi thành công!', reportId: result.insertId });
+        });
+    } catch (error) {
+        console.error('Lỗi không mong muốn:', error);
+        res.status(500).json({ message: 'Đã có lỗi xảy ra khi gửi báo lỗi.' });
+    }
+};
+
+const getUserBugReports = (req, res) => {
+    const userId = req.params.user_id;
+    const query = `
+        SELECT
+            br.report_id,
+            br.title,
+            br.description,
+            br.status,
+            br.created_at,
+            br.updated_at,
+            r.response_id,
+            r.response_text,
+            r.response_date
+        FROM bug_reports br
+        LEFT JOIN bug_responses r ON br.report_id = r.report_id
+        WHERE br.user_id = ?
+        ORDER BY br.created_at DESC;
+    `;
+
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.error('Lỗi khi lấy báo cáo lỗi của người dùng:', err);
+            return res.status(500).json({ message: 'Đã có lỗi xảy ra khi lấy báo cáo.' });
+        }
+
+        const formattedResults = results.reduce((acc, row) => {
+            const reportIndex = acc.findIndex(item => item.report_id === row.report_id);
+
+            if (reportIndex === -1) {
+                acc.push({
+                    report_id: row.report_id,
+                    title: row.title,
+                    description: row.description,
+                    status: row.status,
+                    created_at: row.created_at,
+                    updated_at: row.updated_at,
+                    response: row.response_id ? {
+                        response_id: row.response_id,
+                        response_text: row.response_text,
+                        response_date: row.response_date
+                    } : null,
+                });
+            }
+
+            return acc;
+        }, []);
+
+        res.status(200).json(formattedResults);
+    });
+};
+
 
 module.exports = {
   getAllBugReports,
-  // responseToBug,
   updateStutus,
   getBugReportById,
   getResponseByBugId,
-  postResponseToBug
+  postResponseToBug,
+  createBugReport,
+  getUserBugReports,
 };

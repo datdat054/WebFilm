@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/ReportBugForm.css';
-import { Link } from 'react-router-dom'; // Import Link
+import { useNavigate, Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 function ReportBugForm() {
     const [title, setTitle] = useState('');
@@ -13,6 +14,16 @@ function ReportBugForm() {
         "Trình duyệt không được hỗ trợ",
         "Web không hoạt động"
     ];
+    const navigate = useNavigate();
+    const storedUser = localStorage.getItem('user');
+    const isLoggedIn = !!storedUser;
+
+    useEffect(() => {
+        if (!isLoggedIn) {
+            toast.info("Bạn cần đăng nhập để báo cáo lỗi.");
+            navigate('/login');
+        }
+    }, [isLoggedIn, navigate]);
 
     const handleTitleChange = (event) => {
         setTitle(event.target.value);
@@ -29,6 +40,12 @@ function ReportBugForm() {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
+        if (!isLoggedIn) {
+            toast.error("Bạn cần đăng nhập để báo cáo lỗi.");
+            navigate('/login');
+            return;
+        }
+
         if (!title.trim()) {
             setError('Vui lòng nhập tiêu đề lỗi.');
             return;
@@ -40,7 +57,6 @@ function ReportBugForm() {
         }
 
         try {
-            const storedUser = localStorage.getItem('user');
             const userId = storedUser ? JSON.parse(storedUser)?.user_id : null;
 
             const response = await fetch('http://localhost:3001/api/bugs', {
@@ -78,6 +94,7 @@ function ReportBugForm() {
         );
     }
 
+    // Nếu đã đăng nhập, hiển thị form báo cáo lỗi
     return (
         <div className="report-bug-form-styled">
             <h2>Liên hệ với chúng tôi</h2>
